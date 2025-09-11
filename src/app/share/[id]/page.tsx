@@ -1,9 +1,9 @@
-import type { Metadata, ResolvingMetadata } from "next";
+import type { Metadata } from "next";
 
-type Props = { params: { id: string } };
+type Props = { params: Promise<{ id: string }> };
 
-export async function generateMetadata({ params }: Props, _p: ResolvingMetadata): Promise<Metadata> {
-  const id = params.id;
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
   const title = `Supa Vibe • Share ${id}`;
   const description = "Check out this vibe.";
   const image = `https://placehold.co/1200x630/111/EEE?text=Share+${encodeURIComponent(id)}`;
@@ -15,8 +15,8 @@ export async function generateMetadata({ params }: Props, _p: ResolvingMetadata)
   };
 }
 
-export default function SharePage({ params }: Props) {
-  const { id } = params;
+export default async function SharePage({ params }: Props) {
+  const { id } = await params;
   return (
     <main className="space-y-4">
       <h1 className="h1">Share Card</h1>
