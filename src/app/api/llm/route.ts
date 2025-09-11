@@ -72,7 +72,7 @@ export async function POST(req: Request) {
       { title: 'Slow Chrome', artist: 'Orion Vale' },
     ];
     return NextResponse.json({ songs: fallback });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: 'Bad request' }, { status: 400 });
   }
 }
