@@ -13,7 +13,7 @@ export async function POST(req: Request) {
 			const form = await req.formData();
 			prompt = String(form.get('prompt') || '').trim();
 			const file = form.get('image');
-			if (file && file instanceof Blob && (file as any).size > 0) {
+			if (file && file instanceof File && file.size > 0) {
 				imageBlob = file as Blob;
 			}
 		} else {
@@ -48,8 +48,8 @@ export async function POST(req: Request) {
 			return NextResponse.json({ results: [], note: 'No playable previews found for this query.' }, { status: 200 });
 		}
 		return NextResponse.json({ results }, { status: 200 });
-	} catch (e: any) {
-		const msg = e?.message || 'Unknown error';
+	} catch (e: unknown) {
+		const msg = e instanceof Error ? e.message : 'Unknown error';
 		const needsSpotify = /SPOTIFY_CLIENT_ID/.test(msg) || /token/.test(msg);
 		const status = needsSpotify ? 501 : 500;
 		return NextResponse.json({ error: msg, hint: needsSpotify ? 'Set SPOTIFY_CLIENT_ID/SECRET in env.' : undefined }, { status });

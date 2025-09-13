@@ -39,8 +39,8 @@ export default function DiscoverPage() {
 				setResults(data.results || []);
 				if (data.note) setNote(data.note);
 			}
-		} catch (e: any) {
-			setError(e?.message || 'Unknown error');
+		} catch (e: unknown) {
+			setError(e instanceof Error ? e.message : 'Unknown error');
 		} finally {
 			setLoading(false);
 		}

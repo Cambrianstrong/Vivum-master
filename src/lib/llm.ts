@@ -105,7 +105,7 @@ Vibe tags: ${(vibeTags ?? []).join(', ') || 'none'}`;
 			const parsed = JSON.parse(content);
 			return parsed as Intent;
 		}
-	} catch (e) {
+	} catch {
 		// fall through
 	}
 	return heuristicIntent(prompt, vibeTags);

@@ -65,12 +65,20 @@ export async function fetchArtistById(id: string): Promise<{ id: string; name: s
 	return spotifyGet(`https://api.spotify.com/v1/artists/${id}`);
 }
 
+interface SpotifyTrack {
+	id: string;
+	name: string;
+	preview_url: string | null;
+	artists: { id: string; name: string }[];
+	album?: { images?: { url: string }[] };
+}
+
 export async function getRecommendations(params: {
 	seed_artists?: string[];
 	seed_genres?: string[];
 	target?: { energy?: number; valence?: number; tempo?: number };
 	limit?: number;
-}): Promise<any[]> {
+}): Promise<SpotifyTrack[]> {
 	const qs = new URLSearchParams();
 	qs.set('limit', String(params.limit ?? 20));
 	if (params.seed_artists?.length) qs.set('seed_artists', params.seed_artists.slice(0, 5).join(','));
@@ -79,17 +87,17 @@ export async function getRecommendations(params: {
 	if (params.target?.valence !== undefined) qs.set('target_valence', String(params.target.valence));
 	if (params.target?.tempo !== undefined) qs.set('target_tempo', String(params.target.tempo));
 
-	const data = await spotifyGet<{ tracks: any[] }>(`https://api.spotify.com/v1/recommendations?${qs.toString()}`);
+	const data = await spotifyGet<{ tracks: SpotifyTrack[] }>(`https://api.spotify.com/v1/recommendations?${qs.toString()}`);
 	return data.tracks ?? [];
 }
 
 export async function buildDiscoveryResultsFromTracks(
-	tracks: any[],
+	tracks: SpotifyTrack[],
 	rationale: string
 ): Promise<DiscoveryResult[]> {
 	// Filter tracks with preview_url to satisfy acceptance
 	const playable = tracks.filter((t) => t.preview_url);
-	const artistIds = Array.from(new Set<string>(playable.map((t: any) => t.artists?.[0]?.id).filter(Boolean)));
+	const artistIds = Array.from(new Set<string>(playable.map((t) => t.artists?.[0]?.id).filter(Boolean)));
 	// Batch fetch artist genres (Spotify allows up to 50 ids, but we’ll fetch sequentially for simplicity)
 	const artistGenres = new Map<string, { name: string; genres: string[] }>();
 	for (const id of artistIds) {
@@ -100,7 +108,7 @@ export async function buildDiscoveryResultsFromTracks(
 			// ignore
 		}
 	}
-	return playable.slice(0, 20).map((t: any) => {
+	return playable.slice(0, 20).map((t) => {
 		const a = t.artists?.[0];
 		const albumImg: string | null = t.album?.images?.[0]?.url ?? null;
 		const ag = a?.id ? artistGenres.get(a.id) : undefined;
