@@ -10,8 +10,17 @@ export default function ProfilePage() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
 
+  // Check if Supabase is configured
+  const supabaseConfigured = typeof window !== 'undefined' && 
+    process.env.NEXT_PUBLIC_SUPABASE_URL && 
+    process.env.NEXT_PUBLIC_SUPABASE_URL !== 'https://placeholder.supabase.co';
+
   // Load current user + profile
   useEffect(() => {
+    if (!supabaseConfigured) {
+      setLoading(false);
+      return;
+    }
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
@@ -27,10 +36,14 @@ export default function ProfilePage() {
       setFullName(data?.full_name ?? '');
       setLoading(false);
     })();
-  }, []);
+  }, [supabaseConfigured]);
 
   // Magic link sign-in
   async function sendMagicLink() {
+    if (!supabaseConfigured) {
+      alert('Supabase is not configured. Please add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.');
+      return;
+    }
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
@@ -46,6 +59,10 @@ export default function ProfilePage() {
 
   // Save profile name
   async function saveProfile() {
+    if (!supabaseConfigured) {
+      alert('Supabase is not configured. Please add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.');
+      return;
+    }
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return alert('Please sign in first.');
     const { error } = await supabase
@@ -57,12 +74,33 @@ export default function ProfilePage() {
 
   // Sign out
   async function signOut() {
+    if (!supabaseConfigured) {
+      alert('Supabase is not configured.');
+      return;
+    }
     await supabase.auth.signOut();
     setSessionEmail(null);
     setFullName('');
   }
 
   if (loading) return <div>Loading…</div>;
+
+  // Supabase not configured → show message
+  if (!supabaseConfigured) {
+    return (
+      <div className="space-y-4">
+        <h1 className="h1">Profile</h1>
+        <div className="card p-4">
+          <div className="subtle mb-2">Supabase Configuration Required</div>
+          <div>To use the profile feature, please configure your Supabase environment variables:</div>
+          <ul className="mt-2 space-y-1 text-sm text-neutral-400">
+            <li>• NEXT_PUBLIC_SUPABASE_URL</li>
+            <li>• NEXT_PUBLIC_SUPABASE_ANON_KEY</li>
+          </ul>
+        </div>
+      </div>
+    );
+  }
 
   // Not signed in → email box
   if (!sessionEmail) {
@@ -118,6 +156,10 @@ export default function ProfilePage() {
       <button
         className="btn-ghost w-full"
         onClick={async () => {
+          if (!supabaseConfigured) {
+            alert('Supabase is not configured. Please add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.');
+            return;
+          }
           await supabase.auth.signInWithOAuth({
             provider: 'spotify',
             options: {
